@@ -5,6 +5,6 @@ export default {
   out: "./drizzle",
   dialect: "sqlite",
   dbCredentials: {
-    url: "./data/paperclip.db",
+    url: process.env.TURSO_DATABASE_URL || "file:./data/paperclip.db",
   },
 } satisfies Config;
