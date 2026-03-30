@@ -20,6 +20,7 @@ import {
   Building2,
   Inbox,
   PanelLeft,
+  Plus,
 } from "lucide-react";
 import type { Company } from "@/types";
 
@@ -120,6 +121,14 @@ export function Sidebar({ company, companies }: SidebarProps) {
                 </Link>
               ))}
               <div className="border-t border-[#262626] mt-1 pt-1">
+                <Link
+                  href="/new-company"
+                  onClick={() => setCompanySwitcherOpen(false)}
+                  className="flex items-center gap-2 rounded px-2 py-2 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>חברה חדשה</span>
+                </Link>
                 <Link
                   href="/instance/settings"
                   onClick={() => setCompanySwitcherOpen(false)}
