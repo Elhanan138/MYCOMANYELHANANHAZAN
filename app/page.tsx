@@ -1,13 +1,19 @@
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/OnboardingForm";
+import { db, initDb } from "@/db";
+import { companies } from "@/db/schema";
+import { isNull } from "drizzle-orm";
 
 async function getFirstCompany() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/companies`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const companies = await res.json();
-    return companies[0] || null;
+    await initDb();
+    const result = await db
+      .select()
+      .from(companies)
+      .where(isNull(companies.archivedAt))
+      .orderBy(companies.createdAt)
+      .limit(1);
+    return result[0] || null;
   } catch {
     return null;
   }

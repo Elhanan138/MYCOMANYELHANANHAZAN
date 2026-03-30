@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
+import { db, initDb } from "@/db";
 import { companies } from "@/db/schema";
 import { eq, or } from "drizzle-orm";
 
@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initDb();
     const { id } = await params;
     const [company] = await db
       .select()

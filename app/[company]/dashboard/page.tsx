@@ -13,13 +13,18 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { db, initDb } from "@/db";
+import { companies, agents, issues, runs, approvals, costLedger, activityLog } from "@/db/schema";
+import { eq, or, and, isNull, sql } from "drizzle-orm";
 
 async function getCompany(slug: string): Promise<Company | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/companies/${slug}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return res.json();
+    await initDb();
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(or(eq(companies.id, slug), eq(companies.slug, slug)));
+    return (company as Company) || null;
   } catch {
     return null;
   }
@@ -27,10 +32,48 @@ async function getCompany(slug: string): Promise<Company | null> {
 
 async function getDashboard(companyId: string): Promise<DashboardStats | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/companies/${companyId}/dashboard`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return res.json();
+    const [allAgents, allIssues, runningRuns, pendingApprovals, allCosts, recentActivity] =
+      await Promise.all([
+        db.select().from(agents).where(eq(agents.companyId, companyId)),
+        db.select().from(issues).where(eq(issues.companyId, companyId)),
+        db.select().from(runs).where(and(eq(runs.companyId, companyId), eq(runs.status, "running"))),
+        db.select().from(approvals).where(and(eq(approvals.companyId, companyId), eq(approvals.status, "pending"))),
+        db.select({ costUsd: costLedger.costUsd }).from(costLedger).where(eq(costLedger.companyId, companyId)),
+        db.select().from(activityLog).where(eq(activityLog.companyId, companyId))
+          .orderBy(sql`${activityLog.createdAt} DESC`).limit(10),
+      ]);
+
+    const issuesByStatus: Record<string, number> = {};
+    for (const issue of allIssues) {
+      issuesByStatus[issue.status] = (issuesByStatus[issue.status] || 0) + 1;
+    }
+
+    const totalCostUsd = allCosts.reduce((s, r) => s + (r.costUsd || 0), 0);
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const costByDay = await db
+      .select({
+        date: sql<string>`date(${costLedger.createdAt})`,
+        cost: sql<number>`sum(${costLedger.costUsd})`,
+      })
+      .from(costLedger)
+      .where(sql`${costLedger.companyId} = ${companyId} AND ${costLedger.createdAt} >= ${sevenDaysAgo}`)
+      .groupBy(sql`date(${costLedger.createdAt})`)
+      .orderBy(sql`date(${costLedger.createdAt})`);
+
+    return {
+      totalAgents: allAgents.length,
+      activeAgents: allAgents.filter((a) => a.status === "active").length,
+      openIssues: allIssues.filter((i) =>
+        ["todo", "in_progress", "in_review", "blocked"].includes(i.status)
+      ).length,
+      runningRuns: runningRuns.length,
+      pendingApprovals: pendingApprovals.length,
+      totalCostUsd,
+      recentActivity: recentActivity as DashboardStats["recentActivity"],
+      issuesByStatus: Object.entries(issuesByStatus).map(([status, count]) => ({ status, count })),
+      costByDay: costByDay.map((r) => ({ date: r.date, cost: r.cost || 0 })),
+    };
   } catch {
     return null;
   }

@@ -1,15 +1,18 @@
 import { notFound } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import type { Company } from "@/types";
+import { db, initDb } from "@/db";
+import { companies } from "@/db/schema";
+import { eq, or, isNull } from "drizzle-orm";
 
 async function getCompany(slug: string): Promise<Company | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/companies/${slug}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
+    await initDb();
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(or(eq(companies.id, slug), eq(companies.slug, slug)));
+    return (company as Company) || null;
   } catch {
     return null;
   }
@@ -17,10 +20,12 @@ async function getCompany(slug: string): Promise<Company | null> {
 
 async function getCompanies(): Promise<Company[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/companies`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
+    await initDb();
+    return db
+      .select()
+      .from(companies)
+      .where(isNull(companies.archivedAt))
+      .orderBy(companies.createdAt) as Promise<Company[]>;
   } catch {
     return [];
   }

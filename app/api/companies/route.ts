@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
+import { db, initDb } from "@/db";
 import { companies } from "@/db/schema";
 import { eq, isNull } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
   try {
+    await initDb();
     const result = await db
       .select()
       .from(companies)
@@ -20,6 +21,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await initDb();
     const body = await req.json();
     const { name, description, slug, brandColor } = body;
 
