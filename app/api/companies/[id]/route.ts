@@ -35,7 +35,7 @@ export async function PATCH(
 
     const [updated] = await db
       .update(companies)
-      .set({ name, description, slug, brandColor, updatedAt: new Date() })
+      .set({ name, description, slug, brandColor, updatedAt: new Date().toISOString() })
       .where(or(eq(companies.id, id), eq(companies.slug, id)))
       .returning();
 
@@ -54,7 +54,7 @@ export async function DELETE(
     const { id } = await params;
     await db
       .update(companies)
-      .set({ archivedAt: new Date() })
+      .set({ archivedAt: new Date().toISOString() })
       .where(or(eq(companies.id, id), eq(companies.slug, id)));
 
     return NextResponse.json({ success: true });

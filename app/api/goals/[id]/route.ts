@@ -35,7 +35,7 @@ export async function PATCH(
     const body = await req.json();
     const { name, description, status, level, ownerAgentId } = body;
 
-    const update: Record<string, unknown> = { updatedAt: new Date() };
+    const update: Record<string, unknown> = { updatedAt: new Date().toISOString() };
     if (name !== undefined) update.name = name;
     if (description !== undefined) update.description = description;
     if (status !== undefined) update.status = status;

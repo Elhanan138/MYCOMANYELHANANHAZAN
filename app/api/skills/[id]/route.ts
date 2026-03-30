@@ -35,7 +35,7 @@ export async function PATCH(
         ...(key !== undefined && { key }),
         ...(mode !== undefined && { mode }),
         ...(content !== undefined && { content }),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(skills.id, id))
       .returning();

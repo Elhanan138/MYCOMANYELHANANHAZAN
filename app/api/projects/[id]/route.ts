@@ -42,7 +42,7 @@ export async function PATCH(
         ...(repoUrl !== undefined && { repoUrl }),
         ...(localFolder !== undefined && { localFolder }),
         ...(budgetUsd !== undefined && { budgetUsd }),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(or(eq(projects.id, id), eq(projects.slug, id)))
       .returning();

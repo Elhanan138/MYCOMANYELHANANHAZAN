@@ -26,7 +26,7 @@ export default function RoutinesPage() {
     assigneeAgentId: "",
     projectId: "",
     instructions: "",
-    triggerType: "manual" as const,
+    triggerType: "manual" as "manual" | "cron" | "webhook" | "interval",
     triggerConfig: "{}",
   });
   const [saving, setSaving] = useState(false);
@@ -128,7 +128,7 @@ export default function RoutinesPage() {
               <label className="text-xs text-[#a3a3a3] mb-1 block">סוג טריגר</label>
               <select
                 value={form.triggerType}
-                onChange={(e) => setForm({ ...form, triggerType: e.target.value as typeof form.triggerType })}
+                onChange={(e) => setForm({ ...form, triggerType: e.target.value as 'cron' | 'webhook' | 'manual' | 'interval' })}
                 className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-[#ededed] focus:outline-none focus:border-indigo-500"
               >
                 {Object.entries(TRIGGER_LABELS).map(([k, v]) => (

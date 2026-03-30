@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { costLedger, companies, agents } from "@/db/schema";
-import { eq, or, desc, sum, gte } from "drizzle-orm";
+import { eq, or, desc } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 async function getCompanyByIdOrSlug(id: string) {
@@ -26,50 +26,48 @@ export async function GET(
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get("limit") || "100");
 
-    const [ledger, byAgent, byDay, total] = await Promise.all([
-      db
-        .select({
-          entry: costLedger,
-          agent: agents,
-        })
-        .from(costLedger)
-        .leftJoin(agents, eq(costLedger.agentId, agents.id))
-        .where(eq(costLedger.companyId, company.id))
-        .orderBy(desc(costLedger.createdAt))
-        .limit(limit),
-      db
-        .select({
-          agentId: costLedger.agentId,
-          agentName: agents.name,
-          total: sum(costLedger.costUsd),
-          runs: sql<number>`count(*)`.as("runs"),
-        })
-        .from(costLedger)
-        .leftJoin(agents, eq(costLedger.agentId, agents.id))
-        .where(eq(costLedger.companyId, company.id))
-        .groupBy(costLedger.agentId, agents.name),
-      db
-        .select({
-          date: sql<string>`DATE(${costLedger.createdAt})`.as("date"),
-          cost: sum(costLedger.costUsd),
-        })
-        .from(costLedger)
-        .where(
-          sql`${costLedger.companyId} = ${company.id} AND ${costLedger.createdAt} >= NOW() - INTERVAL '30 days'`
-        )
-        .groupBy(sql`DATE(${costLedger.createdAt})`)
-        .orderBy(sql`DATE(${costLedger.createdAt})`),
-      db
-        .select({ total: sum(costLedger.costUsd) })
-        .from(costLedger)
-        .where(eq(costLedger.companyId, company.id)),
-    ]);
+    const ledger = await db
+      .select({
+        entry: costLedger,
+        agent: agents,
+      })
+      .from(costLedger)
+      .leftJoin(agents, eq(costLedger.agentId, agents.id))
+      .where(eq(costLedger.companyId, company.id))
+      .orderBy(desc(costLedger.createdAt))
+      .limit(limit);
+
+    // Aggregate by agent in JS (SQLite sum works but let's keep it simple)
+    const agentMap: Record<string, { agentId: string; agentName: string | null; total: number }> = {};
+    for (const row of ledger) {
+      const aid = row.entry.agentId || "__none__";
+      if (!agentMap[aid]) {
+        agentMap[aid] = { agentId: aid, agentName: row.agent?.name || null, total: 0 };
+      }
+      agentMap[aid].total += row.entry.costUsd || 0;
+    }
+
+    const total = ledger.reduce((s, r) => s + (r.entry.costUsd || 0), 0);
+
+    // Cost by day (last 30 days) using SQLite date()
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const byDayRows = await db
+      .select({
+        date: sql<string>`date(${costLedger.createdAt})`,
+        cost: sql<number>`sum(${costLedger.costUsd})`,
+      })
+      .from(costLedger)
+      .where(
+        sql`${costLedger.companyId} = ${company.id} AND ${costLedger.createdAt} >= ${thirtyDaysAgo}`
+      )
+      .groupBy(sql`date(${costLedger.createdAt})`)
+      .orderBy(sql`date(${costLedger.createdAt})`);
 
     return NextResponse.json({
       ledger: ledger.map((r) => ({ ...r.entry, agent: r.agent })),
-      byAgent,
-      byDay: byDay.map((r) => ({ date: r.date, cost: parseFloat(r.cost || "0") })),
-      total: parseFloat(total[0]?.total || "0"),
+      byAgent: Object.values(agentMap),
+      byDay: byDayRows.map((r) => ({ date: r.date, cost: r.cost || 0 })),
+      total,
     });
   } catch (error) {
     console.error("[GET /api/companies/[id]/costs]", error);

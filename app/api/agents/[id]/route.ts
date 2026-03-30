@@ -58,7 +58,7 @@ export async function PATCH(
         ...(runPolicy !== undefined && { runPolicy }),
         ...(status !== undefined && { status }),
         ...(budgetUsd !== undefined && { budgetUsd }),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(or(eq(agents.id, id), eq(agents.slug, id)))
       .returning();

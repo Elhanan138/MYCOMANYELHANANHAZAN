@@ -24,7 +24,7 @@ export async function GET() {
             .where(eq(runs.agentId, agent.id))
             .orderBy(desc(runs.startedAt))
             .limit(1);
-          lastRun = lastHeartbeatRun?.startedAt?.toISOString() || null;
+          lastRun = lastHeartbeatRun?.startedAt || null;
         }
 
         return {

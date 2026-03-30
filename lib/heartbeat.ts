@@ -8,28 +8,27 @@ const intervals: Map<string, NodeJS.Timeout> = new Map();
 export async function startHeartbeat(routineId: string) {
   if (intervals.has(routineId)) return;
 
-  const routine = await db.query.routines.findFirst({
-    where: eq(routines.id, routineId),
-  });
+  const [routine] = await db
+    .select()
+    .from(routines)
+    .where(eq(routines.id, routineId))
+    .limit(1);
 
   if (!routine || !routine.assigneeAgentId) return;
 
-  let intervalMs = 60000; // default 1 min
+  let intervalMs = 60000;
   if (routine.triggerType === "interval" && routine.triggerConfig) {
     const config = routine.triggerConfig as Record<string, unknown>;
-    if (typeof config.intervalMs === "number") {
-      intervalMs = config.intervalMs;
-    }
+    if (typeof config.intervalMs === "number") intervalMs = config.intervalMs;
   }
 
   const tick = async () => {
     try {
-      const agent = await db.query.agents.findFirst({
-        where: and(
-          eq(agents.id, routine.assigneeAgentId!),
-          eq(agents.status, "active")
-        ),
-      });
+      const [agent] = await db
+        .select()
+        .from(agents)
+        .where(and(eq(agents.id, routine.assigneeAgentId!), eq(agents.status, "active")))
+        .limit(1);
       if (!agent) return;
 
       await db.insert(runs).values({
@@ -51,14 +50,9 @@ export async function startHeartbeat(routineId: string) {
 
 export function stopHeartbeat(routineId: string) {
   const handle = intervals.get(routineId);
-  if (handle) {
-    clearInterval(handle);
-    intervals.delete(routineId);
-  }
+  if (handle) { clearInterval(handle); intervals.delete(routineId); }
 }
 
 export function stopAllHeartbeats() {
-  for (const [id] of intervals) {
-    stopHeartbeat(id);
-  }
+  for (const [id] of intervals) stopHeartbeat(id);
 }

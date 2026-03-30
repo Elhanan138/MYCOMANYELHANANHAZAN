@@ -5,9 +5,9 @@ export type Company = {
   slug: string;
   logo: string | null;
   brandColor: string | null;
-  archivedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Agent = {
@@ -22,10 +22,10 @@ export type Agent = {
   adapterConfig: Record<string, unknown> | null;
   permissions: Record<string, unknown> | null;
   runPolicy: Record<string, unknown> | null;
-  status: "active" | "inactive" | "archived";
-  budgetUsd: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  status: string;
+  budgetUsd: number | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Project = {
@@ -34,12 +34,12 @@ export type Project = {
   description: string | null;
   slug: string;
   companyId: string;
-  status: "active" | "completed" | "archived" | "on_hold";
+  status: string;
   repoUrl: string | null;
   localFolder: string | null;
-  budgetUsd: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  budgetUsd: number | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Issue = {
@@ -49,15 +49,14 @@ export type Issue = {
   description: string | null;
   companyId: string;
   projectId: string | null;
-  status: "todo" | "in_progress" | "in_review" | "done" | "cancelled" | "blocked";
-  priority: "urgent" | "high" | "medium" | "low" | "no_priority";
+  status: string;
+  priority: string;
   labels: string[] | null;
   assigneeAgentId: string | null;
   parentIssueId: string | null;
   billingCode: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  // Joined
+  createdAt: string;
+  updatedAt: string;
   assignee?: Agent | null;
   project?: Project | null;
 };
@@ -66,10 +65,10 @@ export type IssueComment = {
   id: string;
   issueId: string;
   content: string;
-  authorType: "agent" | "board";
+  authorType: string;
   agentId: string | null;
   runId: string | null;
-  createdAt: Date;
+  createdAt: string;
   agent?: Agent | null;
 };
 
@@ -78,18 +77,18 @@ export type Run = {
   agentId: string | null;
   issueId: string | null;
   companyId: string;
-  type: "issue" | "routine" | "manual" | "heartbeat";
-  status: "queued" | "running" | "done" | "failed" | "cancelled";
-  startedAt: Date | null;
-  finishedAt: Date | null;
+  type: string;
+  status: string;
+  startedAt: string | null;
+  finishedAt: string | null;
   exitCode: number | null;
   errorMessage: string | null;
   stdout: string | null;
   stderr: string | null;
   transcript: string | null;
   invocation: Record<string, unknown> | null;
-  costUsd: string | null;
-  createdAt: Date;
+  costUsd: number | null;
+  createdAt: string;
   agent?: Agent | null;
   issue?: Issue | null;
 };
@@ -99,12 +98,12 @@ export type Goal = {
   name: string;
   description: string | null;
   companyId: string;
-  level: "company" | "team" | "personal";
-  status: "active" | "completed" | "archived" | "paused";
+  level: string;
+  status: string;
   ownerAgentId: string | null;
   parentGoalId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   owner?: Agent | null;
 };
 
@@ -112,12 +111,12 @@ export type Skill = {
   id: string;
   name: string;
   key: string;
-  source: "manual" | "import" | "generated";
-  mode: "inline" | "file" | "url";
+  source: string;
+  mode: string;
   content: string | null;
   companyId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Routine = {
@@ -127,10 +126,10 @@ export type Routine = {
   assigneeAgentId: string | null;
   projectId: string | null;
   instructions: string | null;
-  triggerType: "cron" | "webhook" | "manual" | "interval";
+  triggerType: string;
   triggerConfig: Record<string, unknown> | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   assignee?: Agent | null;
   project?: Project | null;
 };
@@ -139,24 +138,24 @@ export type Approval = {
   id: string;
   companyId: string;
   agentId: string | null;
-  type: "budget" | "action" | "deploy" | "other";
-  status: "pending" | "approved" | "rejected";
+  type: string;
+  status: string;
   linkedIssueIds: string[] | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   agent?: Agent | null;
 };
 
 export type ActivityLog = {
   id: string;
   companyId: string;
-  actorType: "agent" | "board" | "system";
+  actorType: string;
   actorId: string | null;
   action: string;
   entityType: string | null;
   entityId: string | null;
   metadata: Record<string, unknown> | null;
-  createdAt: Date;
+  createdAt: string;
   actor?: Agent | null;
 };
 
@@ -167,9 +166,9 @@ export type CostLedger = {
   runId: string | null;
   tokensIn: number | null;
   tokensOut: number | null;
-  costUsd: string;
+  costUsd: number;
   provider: string | null;
-  createdAt: Date;
+  createdAt: string;
   agent?: Agent | null;
 };
 

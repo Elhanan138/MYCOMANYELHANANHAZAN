@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { activityLog, companies, agents } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
 async function getCompanyByIdOrSlug(id: string) {
   const [company] = await db
@@ -28,10 +29,7 @@ export async function GET(
     const offset = parseInt(url.searchParams.get("offset") || "0");
 
     const result = await db
-      .select({
-        log: activityLog,
-        actor: agents,
-      })
+      .select({ log: activityLog, actor: agents })
       .from(activityLog)
       .leftJoin(agents, eq(activityLog.actorId, agents.id))
       .where(eq(activityLog.companyId, company.id))
@@ -39,12 +37,7 @@ export async function GET(
       .limit(limit)
       .offset(offset);
 
-    const mapped = result.map((r) => ({
-      ...r.log,
-      actor: r.actor,
-    }));
-
-    return NextResponse.json(mapped);
+    return NextResponse.json(result.map((r) => ({ ...r.log, actor: r.actor })));
   } catch (error) {
     console.error("[GET /api/companies/[id]/activity]", error);
     return NextResponse.json({ error: "שגיאה בשרת" }, { status: 500 });
@@ -68,6 +61,7 @@ export async function POST(
     const [log] = await db
       .insert(activityLog)
       .values({
+        id: uuidv4(),
         companyId: company.id,
         actorType,
         actorId: actorId || null,

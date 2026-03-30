@@ -55,7 +55,7 @@ export async function PATCH(
         ...(projectId !== undefined && { projectId }),
         ...(labels !== undefined && { labels }),
         ...(billingCode !== undefined && { billingCode }),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(issues.id, id))
       .returning();

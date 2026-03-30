@@ -18,7 +18,7 @@ export async function POST(
 
     const [updated] = await db
       .update(approvals)
-      .set({ status: decision, updatedAt: new Date() })
+      .set({ status: decision, updatedAt: new Date().toISOString() })
       .where(eq(approvals.id, id))
       .returning();
 

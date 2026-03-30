@@ -45,8 +45,8 @@ export async function PATCH(
         ...(stderr !== undefined && { stderr }),
         ...(transcript !== undefined && { transcript }),
         ...(costUsd !== undefined && { costUsd }),
-        ...(status === "running" && { startedAt: new Date() }),
-        ...(["done", "failed", "cancelled"].includes(status) && { finishedAt: new Date() }),
+        ...(status === "running" && { startedAt: new Date().toISOString() }),
+        ...(["done", "failed", "cancelled"].includes(status) && { finishedAt: new Date().toISOString() }),
       })
       .where(eq(runs.id, id))
       .returning();

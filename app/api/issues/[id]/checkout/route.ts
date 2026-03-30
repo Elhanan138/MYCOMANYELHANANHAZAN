@@ -21,7 +21,7 @@ export async function POST(
     // Update issue status
     await db
       .update(issues)
-      .set({ status: "in_progress", assigneeAgentId: agentId, updatedAt: new Date() })
+      .set({ status: "in_progress", assigneeAgentId: agentId, updatedAt: new Date().toISOString() })
       .where(eq(issues.id, id));
 
     // Create a run
